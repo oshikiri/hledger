@@ -36,3 +36,5 @@ extra-deps:
 # (hledger-web build failure with GHC 8.6 on Windows 7)
 # Might also be fixed by using GHC 8.6.5+, mixed reports
 - unix-time-0.4.6
+
+- easytest-0.3

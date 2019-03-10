@@ -791,7 +791,7 @@ tests_Transaction =
     , tests
         "balanceTransaction"
         [ test "detect unbalanced entry, sign error" $
-          expectLeft
+          unitTest $ matches _Left
             (balanceTransaction
                Nothing
                (Transaction
@@ -807,7 +807,7 @@ tests_Transaction =
                   []
                   [posting {paccount = "a", pamount = Mixed [usd 1]}, posting {paccount = "b", pamount = Mixed [usd 1]}]))
         , test "detect unbalanced entry, multiple missing amounts" $
-          expectLeft $
+          unitTest $ matches _Left $
              balanceTransaction
                Nothing
                (Transaction
@@ -861,7 +861,7 @@ tests_Transaction =
                 ])) `is`
           Right (Mixed [usd 1.35 @@ (eur 1 `withPrecision` maxprecision)])
         , test "balanceTransaction balances based on cost if there are unit prices" $
-          expectRight $
+          unitTest $ matches _Right $
           balanceTransaction
             Nothing
             (Transaction
@@ -879,7 +879,7 @@ tests_Transaction =
                , posting {paccount = "a", pamount = Mixed [usd (-2) `at` eur 1]}
                ])
         , test "balanceTransaction balances based on cost if there are total prices" $
-          expectRight $
+          unitTest $ matches _Right $
           balanceTransaction
             Nothing
             (Transaction
@@ -900,7 +900,7 @@ tests_Transaction =
     , tests
         "isTransactionBalanced"
         [ test "detect balanced" $
-          expect $
+          boolTest $
           isTransactionBalanced Nothing $
           Transaction
             0
@@ -917,7 +917,7 @@ tests_Transaction =
             , posting {paccount = "c", pamount = Mixed [usd (-1.00)]}
             ]
         , test "detect unbalanced" $
-          expect $
+          boolTest $
           not $
           isTransactionBalanced Nothing $
           Transaction
@@ -935,7 +935,7 @@ tests_Transaction =
             , posting {paccount = "c", pamount = Mixed [usd (-1.01)]}
             ]
         , test "detect unbalanced, one posting" $
-          expect $
+          boolTest $
           not $
           isTransactionBalanced Nothing $
           Transaction
@@ -951,7 +951,7 @@ tests_Transaction =
             []
             [posting {paccount = "b", pamount = Mixed [usd 1.00]}]
         , test "one zero posting is considered balanced for now" $
-          expect $
+          boolTest $
           isTransactionBalanced Nothing $
           Transaction
             0
@@ -966,7 +966,7 @@ tests_Transaction =
             []
             [posting {paccount = "b", pamount = Mixed [usd 0]}]
         , test "virtual postings don't need to balance" $
-          expect $
+          boolTest $
           isTransactionBalanced Nothing $
           Transaction
             0
@@ -984,7 +984,7 @@ tests_Transaction =
             , posting {paccount = "d", pamount = Mixed [usd 100], ptype = VirtualPosting}
             ]
         , test "balanced virtual postings need to balance among themselves" $
-          expect $
+          boolTest $
           not $
           isTransactionBalanced Nothing $
           Transaction
@@ -1003,7 +1003,7 @@ tests_Transaction =
             , posting {paccount = "d", pamount = Mixed [usd 100], ptype = BalancedVirtualPosting}
             ]
         , test "balanced virtual postings need to balance among themselves (2)" $
-          expect $
+          boolTest $
           isTransactionBalanced Nothing $
           Transaction
             0
