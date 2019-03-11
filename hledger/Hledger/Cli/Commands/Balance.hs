@@ -481,7 +481,7 @@ multiBalanceReportAsCsv opts@ReportOpts{average_, row_total_} (MultiBalanceRepor
   where
     maybetranspose | transpose_ opts = transpose
                    | otherwise = id
-    
+
 -- | Render a multi-column balance report as HTML.
 multiBalanceReportAsHtml :: ReportOpts -> MultiBalanceReport -> Html ()
 multiBalanceReportAsHtml ropts mbr =
@@ -625,7 +625,7 @@ balanceReportAsTable opts@ReportOpts{average_, row_total_, balancetype_} (MultiB
                                     ))
     maybetranspose | transpose_ opts = \(Table rh ch vals) -> Table ch rh (transpose vals)
                    | otherwise       = id
-                   
+
 -- | Given a table representing a multi-column balance report (for example,
 -- made using 'balanceReportAsTable'), render it in a format suitable for
 -- console output.
@@ -639,10 +639,10 @@ balanceReportTableAsText ropts = tableAsText ropts showamt
 tests_Balance = tests "Balance" [
 
    tests "balanceReportAsText" [
-    test "unicode in balance layout" $ do
+    test "unicode in balance layout" $ unitTest $ do
       j <- io $ readJournal' "2009/01/01 * медвежья шкура\n  расходы:покупки  100\n  актив:наличные\n"
       let opts = defreportopts
-      balanceReportAsText opts (balanceReport opts (queryFromOpts (parsedate "2008/11/26") opts) j) `is`
+      balanceReportAsText opts (balanceReport opts (queryFromOpts (parsedate "2008/11/26") opts) j) ===
         unlines
         ["                -100  актив:наличные"
         ,"                 100  расходы:покупки"
