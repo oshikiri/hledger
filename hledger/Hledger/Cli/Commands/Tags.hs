@@ -17,7 +17,8 @@ import Hledger.Cli.CliOptions
 
 tagsmode = hledgerCommandMode
   $(embedFileRelative "Hledger/Cli/Commands/Tags.txt")
-  [flagNone ["values"] (setboolopt "values") "list tag values instead of tag names"
+  [flagNone ["values"] (setboolopt "values") "list tag values instead"
+  ,flagNone ["values-and-names"] (setboolopt "values-and-names") "list each tag name/value pair"
   ]
   [generalflagsgroup1]
   hiddenflags
@@ -30,11 +31,16 @@ tags CliOpts{rawopts_=rawopts,reportopts_=ropts} j = do
     mtagpat   = headMay args
     queryargs = drop 1 args
     values    = boolopt "values" rawopts
+    valuesandnames  = boolopt "values-and-names" rawopts
     q = queryFromOpts d $ ropts{query_ = unwords $ map quoteIfNeeded queryargs}
     txns = filter (q `matchesTransaction`) $ jtxns $ journalSelectingAmountFromOpts ropts j
     tagsorvalues =
       nubSort $
-      [if values then v else t
+      [if valuesandnames
+       then t<>": "<>v
+       else if values
+            then v
+            else t
       | (t,v) <- concatMap transactionAllTags txns
       , maybe True (`regexMatchesCI` T.unpack t) mtagpat
       ]
