@@ -76,10 +76,11 @@ parse = parseAndFinaliseJournal' timedotfilep
 
 -- ** utilities
 
--- traceparse :: Monad m => a -> m a
--- traceparse = return
-traceparse :: String -> JournalParser m ()
-traceparse = lift.traceParse
+traceparse :: Monad m => a -> m a
+traceparse = return
+-- for debugging:
+-- traceparse :: String -> JournalParser m ()
+-- traceparse = lift.traceParse
 
 -- ** parsers
 
@@ -87,21 +88,26 @@ timedotfilep :: JournalParser m ParsedJournal
 timedotfilep = do many timedotfileitemp
                   eof
                   get
-    where
-      timedotfileitemp :: JournalParser m ()
-      timedotfileitemp = do
-        traceparse "timedotfileitemp"
-        choice [
-          void $ lift emptyorcommentlinep
-         ,timedotdayp >>= \ts -> modify' (addTransactions ts)
-         ] <?> "timedot day entry, or default year or comment line or blank line"
+
+timedotfileitemp :: JournalParser m ()
+timedotfileitemp = do
+  traceparse "timedotfileitemp"
+  choice [
+    try $ void $ lift emptyorcommentlinep'
+   ,try timedotdayp >>= \ts -> modify' (addTransactions ts)
+   ,lift $ skipSome anySingle >> eolof  -- an initial line not beginning with a date, ignore
+   ] <?> "timedot day entry, or default year or comment line or blank line"
 
 addTransactions :: [Transaction] -> Journal -> Journal
 addTransactions ts j = foldl' (flip ($)) j (map addTransaction ts)
 
+emptyorcommentlinep' = optional orgheadingprefixp >> emptyorcommentlinep
+
+orgheadingprefixp = skipSome (char '*') >> skipSome spacenonewline
+
 -- | Parse timedot day entries to zero or more time transactions for that day.
 -- @
--- 2/1
+-- 2020/2/1 optional day description
 -- fos.haskell  .... ..
 -- biz.research .
 -- inc.client1  .... .... .... .... .... ....
@@ -109,8 +115,9 @@ addTransactions ts j = foldl' (flip ($)) j (map addTransaction ts)
 timedotdayp :: JournalParser m [Transaction]
 timedotdayp = do
   traceparse " timedotdayp"
+  lift $ optional orgheadingprefixp
   d <- datep <* lift eolof
-  es <- catMaybes <$> many (const Nothing <$> try (lift emptyorcommentlinep) <|>
+  es <- catMaybes <$> many (const Nothing <$> try (lift emptyorcommentlinep') <|>
                             Just <$> (notFollowedBy datep >> timedotentryp))
   return $ map (\t -> t{tdate=d}) es -- <$> many timedotentryp
 
@@ -122,7 +129,7 @@ timedotentryp :: JournalParser m Transaction
 timedotentryp = do
   traceparse "  timedotentryp"
   pos <- genericSourcePos <$> getSourcePos
-  lift (skipMany spacenonewline)
+  lift $ optional $ choice [orgheadingprefixp, skipSome spacenonewline]
   a <- modifiedaccountnamep
   lift (skipMany spacenonewline)
   hours <-
