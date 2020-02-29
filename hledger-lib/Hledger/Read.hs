@@ -120,9 +120,9 @@ readJournal' t = readJournal def Nothing t >>= either error' return
 -- since hledger 1.17, we prefer predictability.)
 readJournal :: InputOpts -> Maybe FilePath -> Text -> IO (Either String Journal)
 readJournal iopts mpath txt = do
-  -- dbg1IO "trying reader" (rFormat r)
+  dbg1IO "trying reader" (rFormat r)
   ej <- (runExceptT . (rParser r) iopts (fromMaybe "(string)" mpath)) txt
-  -- dbg1IO "reader result" (' ':show ej)
+  dbg1IO "reader result" (' ':show ej)
   return ej
   where
     r = fromMaybe JournalReader.reader $ findReader (mformat_ iopts) mpath
